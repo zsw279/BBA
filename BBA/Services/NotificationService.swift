@@ -177,7 +177,7 @@ final class NotificationService: NSObject, ObservableObject {
 
     // MARK: - 响应处理
 
-    func handleNotificationResponse(response: UNNotificationResponse, userInfo: [NSDictionary]? = [:]) {
+    func handleNotificationResponse(response: UNNotificationResponse, userInfo: [AnyHashable: Any] = [:]) {
         let info = userInfo ?? [:]
         if let reminderID = info["reminderID"] as? String {
             print("🔔 用户点击提醒: \(reminderID)")
