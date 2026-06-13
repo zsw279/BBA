@@ -32,30 +32,10 @@ targets:
       - path: BBA
         excludes:
           - "**/.DS_Store"
-    resources:
-      - path: BBA/Resources/MilestoneTemplates.json
-        type: file
+          - "Resources/Info.plist"
+          - "Resources/Preview Content/**"
     info:
       path: BBA/Resources/Info.plist
-      properties:
-        UILaunchScreen:
-          UIColorName: ""
-        CFBundleDisplayName: BBA
-        CFBundleShortVersionString: "1.0.0"
-        CFBundleVersion: "1"
-        UIRequiredDeviceCapabilities:
-          - arm64
-        UISupportedInterfaceOrientations:
-          - UIInterfaceOrientationPortrait
-        UISupportedInterfaceOrientations~ipad:
-          - UIInterfaceOrientationPortrait
-          - UIInterfaceOrientationPortraitUpsideDown
-          - UIInterfaceOrientationLandscapeLeft
-          - UIInterfaceOrientationLandscapeRight
-        NSPhotoLibraryUsageDescription: "BBA 需要访问你的照片库,来保存宝宝的照片和视频。"
-        NSCameraUsageDescription: "BBA 需要使用相机来记录宝宝的高光时刻。"
-        NSMicrophoneUsageDescription: "BBA 需要使用麦克风来录制宝宝的视频声音。"
-        NSUserNotificationsUsageDescription: "BBA 通过通知提醒你记录喂养、用药、宝宝睡眠等重要时刻。"
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.bba.BBA
@@ -63,3 +43,5 @@ targets:
         GENERATE_INFOPLIST_FILE: NO
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
+        DEVELOPMENT_ASSET_PATHS: '"BBA/Resources/Preview Content"'
+        ENABLE_PREVIEWS: YES

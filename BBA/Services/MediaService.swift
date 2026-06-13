@@ -9,6 +9,8 @@ import Foundation
 import SwiftData
 import UIKit
 import PhotosUI
+import CoreTransferable
+import UniformTypeIdentifiers
 
 @MainActor
 final class MediaService {
@@ -122,9 +124,6 @@ final class MediaService {
 }
 
 // MARK: - Video Transferable
-
-import CoreTransferable
-import UniformTypeIdentifiers
 
 struct VideoTransferable: Transferable {
     let url: URL

@@ -7,11 +7,16 @@ on:
     branches: [main, master]
   workflow_dispatch:
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+  HOMEBREW_NO_REQUIRE_TAP_TRUST: "1"
+  HOMEBREW_NO_AUTO_UPDATE: "1"
+
 jobs:
   build:
     name: Build BBA
     runs-on: macos-14
-    timeout-minutes: 45
+    timeout-minutes: 60
 
     steps:
       - name: Checkout
@@ -20,27 +25,37 @@ jobs:
       - name: Select Xcode
         run: sudo xcode-select -s /Applications/Xcode_15.4.app
 
+      - name: Show Xcode version
+        run: xcodebuild -version
+
       - name: Install XcodeGen
         run: |
-          brew install xcodegen
+          echo "📦 正在安装 xcodegen..."
+          if ! command -v xcodegen &> /dev/null; then
+            brew install xcodegen
+          else
+            echo "✅ xcodegen 已安装: $(xcodegen --version)"
+          fi
 
       - name: Generate Xcode Project
-        run: xcodegen generate --spec project.yml
+        run: |
+          echo "📂 项目结构预览:"
+          find . -type f -not -path './.git/*' -not -path './build/*' | head -20
+          echo ""
+          echo "🔨 生成 Xcode 工程..."
+          xcodegen generate --spec project.yml --no-env
 
-      - name: List Project
-        run: ls -la BBA.xcodeproj
-
-      - name: Cache DerivedData
-        uses: actions/cache@v4
-        with:
-          path: ~/Library/Developer/Xcode/DerivedData
-          key: ${{ runner.os }}-derivedData-${{ hashFiles('BBA/**/*.swift', 'project.yml') }}
-          restore-keys: |
-            ${{ runner.os }}-derivedData-
+      - name: Verify project generated
+        run: |
+          ls -la BBA.xcodeproj/
+          echo ""
+          echo "📋 schemes:"
+          xcodebuild -project BBA.xcodeproj -list
 
       - name: Build for Simulator
         run: |
-          xcodebuild \
+          echo "🔨 开始编译..."
+          set -o pipefail && xcodebuild \
             -project BBA.xcodeproj \
             -scheme BBA \
             -configuration Debug \
@@ -49,20 +64,27 @@ jobs:
             CODE_SIGNING_ALLOWED=NO \
             CODE_SIGNING_REQUIRED=NO \
             CODE_SIGN_IDENTITY="" \
-            build
+            build 2>&1 | tail -100
 
       - name: Locate built .app
         id: locate
         run: |
           APP_PATH=$(find build -name "BBA.app" -type d | head -1)
+          if [ -z "$APP_PATH" ]; then
+            echo "❌ 找不到 BBA.app!"
+            echo "Build 目录内容:"
+            find build -type d 2>/dev/null | head -20 || echo "build 目录不存在"
+            exit 1
+          fi
           echo "APP_PATH=$APP_PATH" >> $GITHUB_OUTPUT
-          echo "Built app at: $APP_PATH"
+          echo "✅ Built app at: $APP_PATH"
           ls -la "$APP_PATH"
 
       - name: Compress .app for distribution
         run: |
           cd "$(dirname '${{ steps.locate.outputs.APP_PATH }}')"
           zip -r BBA-unsigned.zip "$(basename '${{ steps.locate.outputs.APP_PATH }}')"
+          ls -la BBA-unsigned.zip
 
       - name: Upload .app artifact
         uses: actions/upload-artifact@v4
@@ -79,7 +101,14 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "**Status:** ${{ job.status }}" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "下载 \`BBA-unsigned.zip\` 后:" >> $GITHUB_STEP_SUMMARY
-          echo "1. 解压得到 \`BBA.app\`" >> $GITHUB_STEP_SUMMARY
-          echo "2. 用 AltStore 签名后装到 iPhone" >> $GITHUB_STEP_SUMMARY
-          echo "3. 见 README 的「安装到 iPhone」章节" >> $GITHUB_STEP_SUMMARY
+          if [ "${{ job.status }}" == "success" ]; then
+            echo "🎉 **编译成功!**" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "1. 在页面底部 **Artifacts** 下载 \`BBA-unsigned.zip\`" >> $GITHUB_STEP_SUMMARY
+            echo "2. 解压得到 \`BBA.app\`" >> $GITHUB_STEP_SUMMARY
+            echo "3. 接下来用 AltStore 装到 iPhone(见 DEPLOY_GUIDE.md)" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ **编译失败**" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "请滚到日志找到带 ❌ 的步骤,把错误信息截图或复制发给我" >> $GITHUB_STEP_SUMMARY
+          fi
