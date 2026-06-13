@@ -8,13 +8,17 @@ import SwiftData
 
 struct PreferencesView: View {
     @Bindable var baby: Baby
+    @Environment(\.modelContext) private var modelContext
 
     var body: some View {
         Form {
             Section("单位") {
                 Picker("身高 / 头围", selection: Binding(
                     get: { baby.preferredHeightUnit },
-                    set: { baby.preferredHeightUnit = $0; try? baby.modelContext?.save() }
+                    set: { newValue in
+                        baby.preferredHeightUnit = newValue
+                        try? modelContext.save()
+                    }
                 )) {
                     Text("厘米 (cm)").tag("cm")
                     Text("英寸 (in)").tag("inch")
@@ -22,7 +26,10 @@ struct PreferencesView: View {
 
                 Picker("体重", selection: Binding(
                     get: { baby.preferredWeightUnit },
-                    set: { baby.preferredWeightUnit = $0; try? baby.modelContext?.save() }
+                    set: { newValue in
+                        baby.preferredWeightUnit = newValue
+                        try? modelContext.save()
+                    }
                 )) {
                     Text("千克 (kg)").tag("kg")
                     Text("磅 (lb)").tag("lb")

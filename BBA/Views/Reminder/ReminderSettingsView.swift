@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct ReminderSettingsView: View {
-    @StateObject private var notificationService = NotificationService.shared
+    @ObservedObject private var notificationService = NotificationService.shared
 
     var body: some View {
         List {
