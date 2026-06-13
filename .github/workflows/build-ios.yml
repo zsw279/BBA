@@ -80,7 +80,10 @@ jobs:
             CODE_SIGNING_ALLOWED=NO \
             CODE_SIGNING_REQUIRED=NO \
             CODE_SIGN_IDENTITY="" \
-            build 2>&1 | tail -100
+            build 2>&1 | tee build.log | grep -E "(error:|warning:|note:|FAILED)" | head -80
+          echo ""
+          echo "=== 完整日志已保存到 build.log ==="
+          echo "=== 如果上面没显示完整错误,本地查看 build.log ==="
 
       - name: Locate built .app
         id: locate
