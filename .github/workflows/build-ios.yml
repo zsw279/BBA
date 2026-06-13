@@ -1,0 +1,85 @@
+name: Build iOS
+
+on:
+  push:
+    branches: [main, master, develop]
+  pull_request:
+    branches: [main, master]
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build BBA
+    runs-on: macos-14
+    timeout-minutes: 45
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Select Xcode
+        run: sudo xcode-select -s /Applications/Xcode_15.4.app
+
+      - name: Install XcodeGen
+        run: |
+          brew install xcodegen
+
+      - name: Generate Xcode Project
+        run: xcodegen generate --spec project.yml
+
+      - name: List Project
+        run: ls -la BBA.xcodeproj
+
+      - name: Cache DerivedData
+        uses: actions/cache@v4
+        with:
+          path: ~/Library/Developer/Xcode/DerivedData
+          key: ${{ runner.os }}-derivedData-${{ hashFiles('BBA/**/*.swift', 'project.yml') }}
+          restore-keys: |
+            ${{ runner.os }}-derivedData-
+
+      - name: Build for Simulator
+        run: |
+          xcodebuild \
+            -project BBA.xcodeproj \
+            -scheme BBA \
+            -configuration Debug \
+            -destination 'generic/platform=iOS Simulator' \
+            -derivedDataPath build \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY="" \
+            build
+
+      - name: Locate built .app
+        id: locate
+        run: |
+          APP_PATH=$(find build -name "BBA.app" -type d | head -1)
+          echo "APP_PATH=$APP_PATH" >> $GITHUB_OUTPUT
+          echo "Built app at: $APP_PATH"
+          ls -la "$APP_PATH"
+
+      - name: Compress .app for distribution
+        run: |
+          cd "$(dirname '${{ steps.locate.outputs.APP_PATH }}')"
+          zip -r BBA-unsigned.zip "$(basename '${{ steps.locate.outputs.APP_PATH }}')"
+
+      - name: Upload .app artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: BBA-unsigned
+          path: BBA-unsigned.zip
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Build summary
+        if: always()
+        run: |
+          echo "### 📱 BBA Build Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Status:** ${{ job.status }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "下载 \`BBA-unsigned.zip\` 后:" >> $GITHUB_STEP_SUMMARY
+          echo "1. 解压得到 \`BBA.app\`" >> $GITHUB_STEP_SUMMARY
+          echo "2. 用 AltStore 签名后装到 iPhone" >> $GITHUB_STEP_SUMMARY
+          echo "3. 见 README 的「安装到 iPhone」章节" >> $GITHUB_STEP_SUMMARY
