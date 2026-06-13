@@ -15,7 +15,7 @@ env:
 jobs:
   build:
     name: Build BBA
-    runs-on: macos-14
+    runs-on: macos-15
     timeout-minutes: 60
 
     steps:
@@ -24,10 +24,12 @@ jobs:
 
       - name: Show available Xcode versions
         run: |
-          ls /Applications/ | grep -i xcode || echo "No Xcode found in /Applications"
+          echo "All Xcode installations:"
+          ls -d /Applications/Xcode*.app 2>/dev/null || echo "No Xcode found in /Applications"
           echo ""
-          echo "Current default:"
-          xcode-select -p || true
+          echo "Current default Xcode:"
+          xcode-select -p 2>/dev/null || echo "No default set"
+          echo ""
           xcodebuild -version 2>/dev/null || echo "No active Xcode"
 
       - name: Select latest Xcode
