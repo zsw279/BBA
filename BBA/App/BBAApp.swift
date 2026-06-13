@@ -14,8 +14,8 @@ struct BBAApp: App {
     /// 共享的 SwiftData 容器
     let modelContainer: ModelContainer
 
-    /// 通知服务(单例)
-    @StateObject private var notificationService = NotificationService.shared
+    /// 通知服务(单例,直接传值,避免 @MainActor 初始化问题)
+    private let notificationService = NotificationService.shared
 
     @UIApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
 
@@ -36,7 +36,7 @@ struct BBAApp: App {
     }
 
     private func requestNotificationPermissionIfNeeded() {
-        Task {
+        Task { @MainActor in
             _ = await NotificationService.shared.requestAuthorization()
         }
     }
