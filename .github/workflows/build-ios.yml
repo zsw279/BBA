@@ -104,11 +104,21 @@ jobs:
             echo "❌ 找不到 BBA.app!"
             echo "Build 目录内容:"
             find build -type d 2>/dev/null | head -20 || echo "build 目录不存在"
+            # 上传 build.log 供下载分析
             exit 1
           fi
           echo "APP_PATH=$APP_PATH" >> $GITHUB_OUTPUT
           echo "✅ Built app at: $APP_PATH"
           ls -la "$APP_PATH"
+
+      - name: Upload build log (for debugging)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-log
+          path: build.log
+          if-no-files-found: ignore
+          retention-days: 7
 
       - name: Compress .app for distribution
         run: |
