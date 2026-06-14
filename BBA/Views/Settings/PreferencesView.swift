@@ -7,7 +7,7 @@ import SwiftUI
 import SwiftData
 
 struct PreferencesView: View {
-    @Bindable var baby: Baby
+    let baby: Baby
     @Environment(\.modelContext) private var modelContext
 
     var body: some View {

@@ -9,7 +9,7 @@ import SwiftUI
 import SwiftData
 
 struct ExportView: View {
-    @Bindable var baby: Baby
+    let baby: Baby
     @State private var viewModel: ExportViewModel?
     @State private var showShareSheet = false
     @State private var showSuccessAlert = false
