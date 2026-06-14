@@ -80,10 +80,21 @@ jobs:
             CODE_SIGNING_ALLOWED=NO \
             CODE_SIGNING_REQUIRED=NO \
             CODE_SIGN_IDENTITY="" \
-            build 2>&1 | tee build.log | grep -E "(error:|warning:|note:|FAILED)" | head -80
+            build > build.log 2>&1 || true
+          echo "===== ⚠️ 编译错误 (前 30 条) ====="
+          grep -E "error:" build.log | head -30
           echo ""
-          echo "=== 完整日志已保存到 build.log ==="
-          echo "=== 如果上面没显示完整错误,本地查看 build.log ==="
+          echo "===== 错误所在位置 (file:line:col) ====="
+          grep -E "^/.*\.swift:[0-9]+:[0-9]+: error:" build.log | head -30
+          echo ""
+          echo "===== 失败汇总 ====="
+          grep -E "(FAILED|exit code)" build.log | tail -5
+          echo ""
+          if grep -q "error:" build.log; then
+            echo "❌ 有编译错误,请把上面'error:'部分复制给我"
+            exit 1
+          fi
+          echo "✅ 编译成功"
 
       - name: Locate built .app
         id: locate
